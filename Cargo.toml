@@ -4,7 +4,7 @@ version = "0.1.2"
 authors = ["Kara <https://github.com/Karalynx>"]
 description = "Compiles and describes Valve's closed caption files"
 readme = "README.md"
-edition = "2021"
+edition = "2024"
 keywords = ["valve", "source-engine", "closed-captions", "cli"]
 categories = ["command-line-utilities", "game-development"]
 repository = "https://github.com/Karalynx/caption-compiler"
@@ -15,8 +15,8 @@ exclude = [
 ]
 
 [dependencies]
-clap = { version = "4.5.4", features = ["derive"] }
-crc32fast = "1.4.2"
-encoding_rs = "0.8.34"
+clap = { version = "4.5.47", features = ["derive"] }
+crc32fast = "1.5.0"
+encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 keyvalues-parser = "0.2.0"

@@ -133,7 +133,8 @@ fn compile(in_filepath: PathBuf, comp_args: Compile) -> io::Result<()> {
     }
 
     let buf = mem::ManuallyDrop::new(caption_buf);
-    wrt.write_all(unsafe { &Vec::<u8>::from_raw_parts(buf.as_ptr() as *mut u8, buf.len() << 1, buf.capacity() << 1)})?;
+    let buf_bytes = unsafe { Vec::<u8>::from_raw_parts(buf.as_ptr() as *mut u8, buf.len() << 1, buf.capacity() << 1) };
+    wrt.write_all(&buf_bytes)?;
     
     let leftover = header.block_size as u16 - caption_data.offset;
     if comp_args.verbose {
