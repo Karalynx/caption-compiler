@@ -1,6 +1,6 @@
 [package]
 name = "caption-compiler"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Kara <https://github.com/Karalynx>"]
 description = "Compiles and describes Valve's closed caption files"
 readme = "README.md"
@@ -11,7 +11,9 @@ repository = "https://github.com/Karalynx/caption-compiler"
 license = "GPL-3.0"
 exclude = [
 	".gitignore",
-	".github/*"
+	".github/*",
+    "npins/*",
+    "shell.nix"
 ]
 
 [dependencies]
