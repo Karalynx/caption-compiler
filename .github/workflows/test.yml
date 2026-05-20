@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Get toolchain
+      id: toolchain
+      shell: bash
+      run: |
+        echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ steps.toolchain.outputs.channel }}
+
+    - name: Build project
+      run: cargo build --verbose
+      
+    - name: Run tests
+      run: cargo test --verbose

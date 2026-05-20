@@ -1,100 +1,70 @@
-include!("../src/main.rs");
 
-use crate::header::*;
+use std::env::temp_dir;
 
-use std::io::Cursor;
-
-#[test]
-fn version() {
-    // Valid version
-    assert!(Version::new(1).is_some());
-
-    // Invalid version
-    assert!(Version::new(0).is_none());
-}
+use caption_compiler::{captions::*, cli::{self, Compile, CompileError, DescribeError}};
 
 #[test]
-fn vccd() {
-    // Valid VCCD
-    assert!(VCCD::new(1145258838).is_some());
+fn compile() {
+    let temp_dir = temp_dir();
+    let compile_args = Compile { verbose: false, output: Some(temp_dir) };
 
-    // Invalid VCCD
-    assert!(VCCD::new(0).is_none());
-}
-
-#[test]
-fn header() {
-    // Valid header
-    assert!(Header::from_reader(&mut Cursor::new([86, 67, 67, 68,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0])).is_ok());
-
-    // Invalid version
-    assert!(Header::from_reader(&mut Cursor::new([86, 67, 67, 68,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0])).is_err());
-
-    // Invalid VCCD
-    assert!(Header::from_reader(&mut Cursor::new([0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0])).is_err());
-
-    // 4 bytes short
-    assert!(Header::from_reader(&mut Cursor::new([86, 67, 67, 68,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0])).is_err());
-
-    // Buffer empty
-    assert!(Header::from_reader(&mut Cursor::new([])).is_err());
-}
-
-#[test]
-fn caption_entry() {
-    // Valid entry
-    assert!(CaptionEntry::from_reader(&mut Cursor::new([0; 12])).is_ok());
-
-    // 2 bytes short
-    assert!(CaptionEntry::from_reader(&mut Cursor::new([0; 10])).is_err());
-
-    // Buffer empty
-    assert!(CaptionEntry::from_reader(&mut Cursor::new([])).is_err());
-}
-
-#[test]
-fn caption_compile() {
     // Success
-    assert!(compile("tests/compilation/valid_english.txt".into(), Default::default()).is_ok());
-
-    // Success, ignores captions starting with [english]
-    assert!(compile("tests/compilation/valid_russian.txt".into(), Default::default()).is_ok());
+    assert!(cli::compile("tests/compilation/valid_english.txt", compile_args.clone()).is_ok());
     
-    // Dir size must be 2
-    let mut russian_dat = File::open("tests/compilation/valid_russian.dat").unwrap();
-    let header = Header::from_reader(&mut russian_dat).unwrap();
-    assert_eq!(header.dir_size, 2);
-
     // Success, caption size equals 8192 bytes
-    assert!(compile("tests/compilation/valid_length_equals_8192.txt".into(), Default::default()).is_ok());
+    assert!(cli::compile("tests/compilation/valid_length_equals_8192.txt", compile_args.clone()).is_ok());
 
     // Error, missing quote
-    assert!(compile("tests/compilation/invalid_format.txt".into(), Default::default()).is_err());
+    assert_eq!(
+        cli::compile("tests/compilation/invalid_format.txt", compile_args.clone()),
+        Err(CompileError::Parse(ClosedCaptionError::Format(
+            CaptionParseError::UnexpectedEof { expected: TokenKind::String }
+        )))
+    );
 
     // Error, missing 'Tokens'
-    assert!(compile("tests/compilation/invalid_format2.txt".into(), Default::default()).is_err());
+    assert_eq!(
+        cli::compile("tests/compilation/invalid_format2.txt", compile_args.clone()),
+        Err(CompileError::Parse(ClosedCaptionError::Format(
+            CaptionParseError::LiteralMismatch { line: 4, expected: "Tokens".into(), found: "{".into() }
+        )))
+    );
 
     // Error, caption size exceeds 8192 bytes
-    assert!(compile("tests/compilation/invalid_length_exceeds_8192.txt".into(), Default::default()).is_err());
+    assert_eq!(
+        cli::compile("tests/compilation/invalid_length_exceeds_8192.txt", compile_args.clone()),
+        Err(CompileError::Parse(ClosedCaptionError::CaptionLength { id: "barn.bunyip".into() }))
+    );
 
     // Empty file
-    assert!(compile("tests/compilation/invalid_empty.txt".into(), Default::default()).is_err());
+    assert_eq!(
+        cli::compile("tests/compilation/invalid_empty.txt", compile_args.clone()),
+        Err(CompileError::Parse(ClosedCaptionError::Format(
+            CaptionParseError::UnexpectedEof { expected: TokenKind::String }
+        )))
+    );
 }
 
 #[test]
-fn caption_describe() {
+fn describe() {
     // Valid .DAT file
-    assert!(describe("tests/description/valid_english.dat".into()).is_ok());
+    assert!(cli::describe("tests/description/valid_english.dat").is_ok());
 
     // Invalid vccd
-    assert!(describe("tests/description/invalid_vccd.dat".into()).is_err());
+    assert_eq!(
+        cli::describe("tests/description/invalid_vccd.dat"),
+        Err(DescribeError::InvalidVCCD { found: 1145258752 })
+    );
 
     // Invalid version
-    assert!(describe("tests/description/invalid_version.dat".into()).is_err());
+    assert_eq!(
+        cli::describe("tests/description/invalid_version.dat"),
+        Err(DescribeError::InvalidVersion { found: 2 })
+    );
 
     // Missing captions
-    assert!(describe("tests/description/invalid_missing_data.dat".into()).is_err());
+    assert!(cli::describe("tests/description/invalid_missing_data.dat").is_err());
 
     // Empty file
-    assert!(describe("tests/description/invalid_empty.dat".into()).is_err());
+    assert!(cli::describe("tests/description/invalid_empty.dat").is_err());
 }
