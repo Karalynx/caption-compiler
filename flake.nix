@@ -19,7 +19,7 @@
         };
 
         manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
-        toolchain = (pkgs.lib.importTOML ./rust-toolchain.toml);
+        toolchain = (pkgs.lib.importTOML ./rust-toolchain.toml).toolchain;
         rust = {
           version = pkgs.rust-bin.stable.${toolchain.channel};
           platform = pkgs.makeRustPlatform {
