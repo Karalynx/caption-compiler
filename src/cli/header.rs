@@ -80,7 +80,7 @@ impl Header {
         let mut buf = [0u8; mem::size_of::<Self>()];
         rdr.read_exact(&mut buf)?;
 
-        let header = Header::from_bytes(buf);
+        let header = Self::from_bytes(buf);
         if Self::VCCD != header.vccd {
             return Err(HeaderError::InvalidVCCD { found: header.vccd });
         }
