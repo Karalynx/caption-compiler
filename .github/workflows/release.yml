@@ -46,7 +46,7 @@ jobs:
             
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Get variables
         id: variables
@@ -56,7 +56,7 @@ jobs:
           echo "exec-name=$(grep '^name' Cargo.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
 
       - name: Build
-        uses: houseabsolute/actions-rust-cross@v1
+        uses: houseabsolute/actions-rust-cross@v1.0.8
         with:
           command: build
           target: ${{ matrix.platform.target }}
@@ -65,7 +65,7 @@ jobs:
           strip: true
 
       - name: Release
-        uses: houseabsolute/actions-rust-release@v0.0.7
+        uses: houseabsolute/actions-rust-release@v1.0.1
         with:
           executable-name: ${{ steps.variables.outputs.exec-name }}
           target: ${{ matrix.platform.target }}
