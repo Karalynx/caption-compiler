@@ -2,22 +2,45 @@ name: Release
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
-
-permissions:
-  contents: write
+  push:
+    tags:
+      - "v[0-9]*"
 
 env:
   CARGO_TERM_COLOR: always
 
-jobs:
-  release:
-    name: Release - ${{ matrix.platform.os-name }}
-    runs-on: ${{ matrix.platform.runner }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-24.04
+    outputs:
+      channel: ${{ steps.variables.outputs.channel }}
+      exec-name: ${{ steps.variables.outputs.exec-name }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Get variables
+        id: variables
+        shell: bash
+        run: |
+          echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
+          echo "exec-name=$(grep '^name' Cargo.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
+
+  package:
+    name: Package - ${{ matrix.platform.os-name }}
+    needs: setup
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         platform:
           - os-name: linux-x86_64
@@ -43,30 +66,55 @@ jobs:
           - os-name: windows-aarch64
             target: aarch64-pc-windows-msvc
             runner: windows-latest
-            
+            skip-tests: true
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Get variables
-        id: variables
-        shell: bash
-        run: |
-          echo "channel=$(grep '^channel' rust-toolchain.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
-          echo "exec-name=$(grep '^name' Cargo.toml | sed 's/.*= \"//; s/\"//')" >> $GITHUB_OUTPUT
+      - name: Test
+        if: matrix.platform.skip-tests != true
+        uses: houseabsolute/actions-rust-cross@v1.0.8
+        with:
+          command: test
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ needs.setup.outputs.channel }}
+          args: "--locked --release"
 
       - name: Build
         uses: houseabsolute/actions-rust-cross@v1.0.8
         with:
           command: build
           target: ${{ matrix.platform.target }}
-          toolchain: ${{ steps.variables.outputs.channel }}
+          toolchain: ${{ needs.setup.outputs.channel }}
           args: "--locked --release"
           strip: true
 
-      - name: Release
+      - name: Package
         uses: houseabsolute/actions-rust-release@v1.0.1
         with:
-          executable-name: ${{ steps.variables.outputs.exec-name }}
+          executable-name: ${{ needs.setup.outputs.exec-name }}
           target: ${{ matrix.platform.target }}
+          changes-file: ""
+
+  publish:
+    name: Publish
+    needs: [setup, package]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Publish
+        uses: houseabsolute/actions-rust-release/publish@v1.0.1
+        with:
+          executable-name: ${{ needs.setup.outputs.exec-name }}
           changes-file: ""

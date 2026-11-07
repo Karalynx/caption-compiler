@@ -7,16 +7,22 @@ on:
   pull_request:
     branches: [ "master" ]
 
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Checkout
       uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Get toolchain
       id: toolchain
