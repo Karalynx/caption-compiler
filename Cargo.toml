@@ -1,6 +1,6 @@
 [package]
 name = "caption-compiler"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Kara <https://github.com/Karalynx>"]
 description = "Compiles and describes Valve's closed caption files"
 readme = "README.md"
