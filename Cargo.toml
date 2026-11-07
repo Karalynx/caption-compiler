@@ -17,7 +17,7 @@ exclude = [
 ]
 
 [dependencies]
-clap = { version = "4.6.6", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
-crc32fast = "1.5.1"
-encoding_rs = "0.8.35"
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "help", "usage", "error-context"] }
+crc32fast = "1.5.4"
+encoding_rs = "0.8.44"
 packbytes = "0.2.0"
