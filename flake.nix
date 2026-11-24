@@ -18,7 +18,6 @@
           inherit system overlays;
         };
 
-        manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
         toolchain = (pkgs.lib.importTOML ./rust-toolchain.toml).toolchain;
         rust = {
           version = pkgs.rust-bin.stable.${toolchain.channel};
@@ -28,13 +27,8 @@
           };
         };
       in {
-        packages.default = rust.platform.buildRustPackage {
-          pname = manifest.name;
-          version = manifest.version;
-
-          src = pkgs.lib.cleanSource ./.;
-
-          cargoLock.lockFile = ./Cargo.lock;
+        packages.default = pkgs.callPackage ./package.nix {
+          rustPlatform = rust.platform;
         };
 
         devShells.default = pkgs.mkShell {
