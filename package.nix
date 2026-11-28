@@ -17,8 +17,8 @@ in
     cargoLock.lockFile = ./Cargo.lock;
 
     meta = {
-      description = "Compiles and describes Valve's closed caption files";
-      homepage = "https://github.com/Karalynx/caption-compiler";
+      description = manifest.description;
+      homepage = manifest.repository;
       license = with lib.licenses; [ gpl3 ];
       platforms = with lib.platforms; linux ++ darwin ++ windows;
     };
