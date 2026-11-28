@@ -13,6 +13,7 @@ exclude = [
 	".gitignore",
 	".github/*",
 	"flake.*",
+	"*.nix",
 	".envrc"
 ]
 
